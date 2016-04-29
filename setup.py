@@ -10,13 +10,13 @@ with open('LICENSE') as f:
     license = f.read()
 
 setup(
-    name='sample',
+    name='realtime-data-dashboard',
     version='0.0.1',
-    description='Sample package for Python-Guide.org',
+    description='Simplistic tornado/redis based web server for writing real time data dashboards',
     long_description=readme,
-    author='Kenneth Reitz',
-    author_email='me@kennethreitz.com',
-    url='https://github.com/kennethreitz/samplemod',
+    author='Alan Borand',
+    author_email='',
+    url='https://github.com/borand/realtime-data-dashboard.git',
     license=license,
     packages=find_packages(exclude=('tests', 'docs'))
 )
