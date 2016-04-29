@@ -1,3 +1,10 @@
+# Virtual enviromnemt dir
+.venv
+
+###################################################33
+#
+# GitHub generated
+#
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
