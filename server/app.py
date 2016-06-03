@@ -23,7 +23,19 @@ import os
 import re
 import json
 from redis import Redis
+#######################################################
+# create logger with 'spam_application'
+logger = logging.getLogger('tornado app')
+logger.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
+#######################################################
 host_port = 8888;
 host_ip   = '192.168.1.13'
 redis_host_ip = host_ip
@@ -31,7 +43,9 @@ log_url   = 'log'
 R = Redis()
 
 def websocket_processing(msg):
+    logger.debug('websocket_processing(channel={0})'.format(msg))
     try:
+        logger.debug('websocket_processing{0}'.format(data))
         data = simplejson.loads(msg)
         cmd = data.get('cmd',None)
 
@@ -57,11 +71,12 @@ class PageHandler(tornado.web.RequestHandler):
             self.write("Requested page not found {0}".format(html_file))
 
 class CmdHandler(tornado.web.RequestHandler):
-    def get(self, msg):
-        R.publish('log',msg)
+    def get(self, cmd):
+        logger.info('CmdHandler.get({0}):'.format(cmd))
+        R.publish('log',cmd)
+        self.write('CmdHandler.get')
 
 class MessageHandler(tornado.websocket.WebSocketHandler):
-    channel = 'comport'
 
     def __init__(self, *args, **kwargs):
         super(MessageHandler, self).__init__(*args, **kwargs)
@@ -69,8 +84,9 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def open(self, chan):        
+    def open(self, chan):
         self.sub_channel = chan
+        logger.debug('MessageHandler.open(channel={0})'.format(chan))
         self.listen()
 
     @tornado.gen.engine
@@ -81,7 +97,8 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
         self.client.listen(self.on_message)
 
     def on_message(self, msg):        
-        
+        logger.debug('MessageHandler.on_message({0})'.format)
+        R.publish('ws',msg)
         if isinstance(msg,unicode):            
             websocket_processing(msg)
         else:
@@ -95,18 +112,30 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
                 self.close()
 
     def on_close(self):
-        log.debug("on_close()")
+        logger.debug("on_close()")
         if self.client.subscribed:
             self.client.unsubscribe(self.sub_channel)
             self.client.disconnect()
+
+class EchoWebSocket(tornado.websocket.WebSocketHandler):
+    def open(self, chan):
+        logger.debug("WebSocket opened")
+
+    def on_message(self, message):
+        logger.debug("on_message = {}".format(message))
+        self.write_message('\"OK\"')
+
+    def on_close(self):        
+        logger.debug("WebSocket closed")
 
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
                 (r'/', MainHandler),
                 (r'/page/(?P<html_file>.*)', PageHandler),
-                (r'/msg/(?P<msg>.*)', CmdHandler),
-                (r'/websocket/(?P<chan>.*)', MessageHandler),
+                (r'/cmd/(?P<cmd>.*)', CmdHandler),
+                #(r'/websocket/(?P<chan>.*)', MessageHandler),
+                (r'/websocket/(?P<chan>.*)', EchoWebSocket),
                 ]
         
         settings = dict(
@@ -119,7 +148,7 @@ class Application(tornado.web.Application):
         tornado.web.Application.__init__(self, handlers, **settings)
 
 if __name__ == '__main__':
-    
+    logger.info('Runint: ' + __name__)
     app = Application()
     app.listen(host_port)    
     tornado.ioloop.IOLoop.instance().start()
