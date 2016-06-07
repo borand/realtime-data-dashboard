@@ -26,17 +26,18 @@ function SendCmd(cmd, val) {
 // WEBSOCKETS FUNCTIONS
 //
 //
-function open_websocket(hostname, hostport, hosturl) {
+function open_websocket(ip_port, hosturl) {
 
 	dbg('Attempting to open web socket',true);
 	function show_message(message) {
 		show_server_msg(message);		
 	}	
-	var websocket_address = "ws://" + hostname + ":" + hostport + "/websocket/" + hosturl;
+	var websocket_address = "ws://" + ip_port + "/websocket/" + hosturl;
 	ws = new WebSocket(websocket_address);
 	
 	ws.onopen = function() {		
 		dbg('web socket open', debug_websocket);		
+		// ws.send('\"ping\"')
 	};
 
 	ws.onmessage = function(event) {		
@@ -62,11 +63,10 @@ function server_message_handler(data){
 
 
 function connect_to_websocket_host(){
-	var hostname = "127.0.0.1";
-	var hostport = "8888";
-	var hosturl  = "ws";
-	dbg('Pressed button: button_connect: [host, port] ' + hostname +':' + hostport + '/websocket/'+ hosturl, true);
-	open_websocket(hostname, hostport, hosturl);
+	var ip_port = location.host;
+	var hosturl  = "MSG";	
+	dbg('Pressed button: button_connect: [host, port] ' + ip_port + '/websocket/'+ hosturl, true);
+	open_websocket(ip_port, hosturl);
 }
 
 $(document).ready(function() {
